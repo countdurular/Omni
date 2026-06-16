@@ -1,0 +1,123 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "A CRM lead representing a registered business or customer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique Lead Identifier" },
+        "name": { "type": "string", "description": "Human contact name" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "email": { "type": "string", "format": "email", "description": "Owner business email" },
+        "avatar": { "type": "string", "description": "Unsplash or social profile picture URL" },
+        "score": { "type": "integer", "description": "Engagement priority score from 0-100" },
+        "stage": { 
+          "type": "string", 
+          "enum": ["Lead", "Contacted", "Qualified", "Proposal", "Closed Won", "Closed Lost"],
+          "description": "Sales pipeline visual board stage"
+        },
+        "tags": { 
+          "type": "array", 
+          "description": "Array of assigned audience list segments" 
+        },
+        "lastMessageAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "aiStatus": { 
+          "type": "string", 
+          "enum": ["AI Active", "Human Takeover", "Closed"],
+          "description": "Inbox automated agent system status"
+        }
+      },
+      "required": ["id", "name", "phone", "email", "score", "stage", "aiStatus"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single communication event in a lead conversation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sender": { "type": "string", "enum": ["lead", "agent", "ai"] },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["sent", "delivered", "read"] }
+      },
+      "required": ["id", "sender", "text", "timestamp"]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "WhatsApp broadcast marketing automation campaign records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "templateName": { "type": "string" },
+        "status": { "type": "string", "enum": ["Draft", "Scheduled", "Sending", "Completed", "Failed"] },
+        "sentCount": { "type": "integer" },
+        "deliveredCount": { "type": "integer" },
+        "readCount": { "type": "integer" },
+        "repliesCount": { "type": "integer" },
+        "audienceSegment": { "type": "string" },
+        "scheduleTime": { "type": "string", "format": "date-time" },
+        "roi": { "type": "integer" },
+        "spent": { "type": "number" },
+        "revenue": { "type": "number" }
+      },
+      "required": ["id", "name", "templateName", "status", "sentCount"]
+    },
+    "CampaignTemplate": {
+      "title": "CampaignTemplate",
+      "description": "Ready-to-send template with dynamic variables for campaigns",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "text": { "type": "string" },
+        "variables": { "type": "array" }
+      },
+      "required": ["id", "name", "text", "variables"]
+    },
+    "WhatsAppConnection": {
+      "title": "WhatsAppConnection",
+      "description": "Meta WhatsApp Business API manual or embedded credentials",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "workspace_id": { "type": "string" },
+        "phone_number_id": { "type": "string" },
+        "waba_id": { "type": "string" },
+        "access_token_encrypted": { "type": "string" },
+        "verify_token_encrypted": { "type": "string" },
+        "business_phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Disconnected", "Pending"] },
+        "last_validation_at": { "type": "string", "format": "date-time" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "meta_app_id": { "type": "string" }
+      },
+      "required": ["id", "user_id", "phone_number_id", "waba_id", "access_token_encrypted", "verify_token_encrypted", "business_phone", "status"]
+    }
+  },
+  "firestore": {
+    "/whatsapp_connections/{connectionId}": {
+      "schema": "WhatsAppConnection",
+      "description": "Linked WhatsApp Business accounts credentials and status"
+    },
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Dynamic workspace marketing lead profiles"
+    },
+    "/leads/{leadId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Thread collection of chats for a given lead"
+    },
+    "/campaigns/{campaignId}": {
+      "schema": "Campaign",
+      "description": "Marketing broadcast campaigns history and performance metrics"
+    },
+    "/templates/{templateId}": {
+      "schema": "CampaignTemplate",
+      "description": "Reusable customizable template segments"
+    }
+  }
+}

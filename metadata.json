@@ -1,0 +1,6 @@
+{
+  "name": "WhatsApp AI Marketing Automation",
+  "description": "A comprehensive SaaS platform for Meta WhatsApp Cloud API simulation, AI customer inbox, campaign automation, and CRM analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

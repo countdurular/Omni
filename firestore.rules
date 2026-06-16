@@ -1,0 +1,159 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny Catch All)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- REUSABLE SECURITY PRIMITIVES ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return isSignedIn() && request.auth.token.email == 'countdurular@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- ENTITY VALIDATION BLUEPRINTS ---
+
+    function isValidLead(data) {
+      return data.id is string && data.id.size() <= 128 
+        && data.name is string && data.name.size() <= 100
+        && data.phone is string && data.phone.size() <= 50
+        && data.email is string && data.email.size() <= 100
+        && data.score is int && data.score >= 0 && data.score <= 100
+        && data.stage in ["Lead", "Contacted", "Qualified", "Proposal", "Closed Won", "Closed Lost"]
+        && data.aiStatus in ["AI Active", "Human Takeover", "Closed"]
+        && data.keys().hasAll(['id', 'name', 'phone', 'email', 'score', 'stage', 'aiStatus'])
+        && data.keys().size() <= 12; // safety envelope
+    }
+
+    function isValidMessage(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.sender in ["lead", "agent", "ai"]
+        && data.text is string && data.text.size() <= 2000
+        && data.keys().hasAll(['id', 'sender', 'text'])
+        && data.keys().size() <= 8;
+    }
+
+    function isValidCampaign(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 200
+        && data.templateName is string && data.templateName.size() <= 200
+        && data.status in ["Draft", "Scheduled", "Sending", "Completed", "Failed"]
+        && data.sentCount is int && data.sentCount >= 0
+        && data.keys().hasAll(['id', 'name', 'templateName', 'status', 'sentCount'])
+        && data.keys().size() <= 15;
+    }
+
+    function isValidTemplate(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 200
+        && data.text is string && data.text.size() <= 2000
+        && data.keys().hasAll(['id', 'name', 'text'])
+        && data.keys().size() <= 6;
+    }
+
+    function isValidWhatsappConnection(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.user_id is string && data.user_id.size() <= 100
+        && data.phone_number_id is string && data.phone_number_id.size() <= 100
+        && data.waba_id is string && data.waba_id.size() <= 100
+        && data.access_token_encrypted is string && data.access_token_encrypted.size() <= 512
+        && data.verify_token_encrypted is string && data.verify_token_encrypted.size() <= 128
+        && data.business_phone is string && data.business_phone.size() <= 50
+        && data.status in ["Active", "Disconnected", "Pending"]
+        && data.keys().hasAll(['id', 'user_id', 'phone_number_id', 'waba_id', 'access_token_encrypted', 'verify_token_encrypted', 'business_phone', 'status'])
+        && data.keys().size() <= 15;
+    }
+
+    // --- COLLECTION GATES ---
+
+    // 1. CRM Leads
+    match /leads/{leadId} {
+      allow get, list: if isOwner();
+      
+      allow create: if isOwner() 
+        && isValidId(leadId) 
+        && isValidLead(request.resource.data);
+
+      allow update: if isOwner() 
+        && isValidId(leadId) 
+        && isValidLead(request.resource.data)
+        && (
+          // Immortal creation field preservation rules
+          request.resource.data.id == resource.data.id &&
+          // Action-based transitions or standard field modifications
+          request.resource.data.diff(resource.data).affectedKeys().hasAny(['stage', 'score', 'aiStatus', 'lastMessageAt', 'name', 'phone', 'email', 'tags'])
+        );
+
+      allow delete: if isOwner() 
+        && isValidId(leadId);
+
+      // Subcollection: Individual Message Threads
+      match /messages/{messageId} {
+        allow get, list: if isOwner();
+        
+        allow create: if isOwner() 
+          && isValidId(messageId) 
+          && isValidMessage(request.resource.data);
+
+        allow update, delete: if isOwner();
+      }
+    }
+
+    // 2. Broadcast Campaigns
+    match /campaigns/{campaignId} {
+      allow get, list: if isOwner();
+      
+      allow create: if isOwner() 
+        && isValidId(campaignId) 
+        && isValidCampaign(request.resource.data);
+
+      allow update: if isOwner() 
+        && isValidId(campaignId) 
+        && isValidCampaign(request.resource.data)
+        && request.resource.data.id == resource.data.id;
+
+      allow delete: if isOwner();
+    }
+
+    // 3. Campaign Templates
+    match /templates/{templateId} {
+      allow get, list: if isOwner();
+      
+      allow create: if isOwner() 
+        && isValidId(templateId) 
+        && isValidTemplate(request.resource.data);
+
+      allow update: if isOwner() 
+        && isValidId(templateId) 
+        && isValidTemplate(request.resource.data)
+        && request.resource.data.id == resource.data.id;
+
+      allow delete: if isOwner();
+    }
+
+    // 4. WhatsApp Connections
+    match /whatsapp_connections/{connectionId} {
+      allow get, list: if isOwner();
+      
+      allow create: if isOwner() 
+        && isValidId(connectionId) 
+        && isValidWhatsappConnection(request.resource.data);
+
+      allow update: if isOwner() 
+        && isValidId(connectionId) 
+        && isValidWhatsappConnection(request.resource.data)
+        && request.resource.data.id == resource.data.id;
+
+      allow delete: if isOwner();
+    }
+  }
+}
