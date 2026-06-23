@@ -6,6 +6,7 @@ import CrmView from "./components/CrmView";
 import CampaignsView from "./components/CampaignsView";
 import BillingView from "./components/BillingView";
 import WhatsAppView from "./components/WhatsAppView";
+import WorkspaceHubView from "./components/WorkspaceHubView";
 
 import { Lead, Message, Campaign, CampaignTemplate, AnalyticsSummary } from "./types";
 import {
@@ -387,6 +388,7 @@ export default function App() {
                   {currentView === "crm" && "Meta CRM Lead database"}
                   {currentView === "campaigns" && "Broadcast Automation"}
                   {currentView === "whatsapp" && "WhatsApp API Setup Link"}
+                  {currentView === "workspace" && "Google Workspace Hub"}
                   {currentView === "billing" && "Subscription Pricing"}
                 </span>
               </div>
@@ -455,6 +457,14 @@ export default function App() {
 
               {currentView === "whatsapp" && (
                 <WhatsAppView />
+              )}
+
+              {currentView === "workspace" && (
+                <WorkspaceHubView 
+                  leads={leads}
+                  onAddLead={handleAddLead}
+                  onSendMessage={handleSendMessage}
+                />
               )}
 
               {currentView === "billing" && (

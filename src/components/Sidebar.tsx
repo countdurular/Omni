@@ -27,6 +27,7 @@ export default function Sidebar({ currentView, onViewChange, userEmail = "countd
     { id: "crm", label: "CRM Contacts", icon: Users },
     { id: "campaigns", label: "Campaigns", icon: Megaphone },
     { id: "whatsapp", label: "WhatsApp Link", icon: Settings },
+    { id: "workspace", label: "Workspace Link", icon: Sparkles, badge: "Sync Live" },
     { id: "billing", label: "Billing & Plans", icon: CreditCard },
   ];
 
